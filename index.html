@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DE Profit Calculator – TBC</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold:       #c8a84b;
+    --gold-light: #f0d078;
+    --gold-dim:   #7a6128;
+    --bg:         #0d0b07;
+    --surface:    #161209;
+    --panel:      #1c1509;
+    --border:     #3a2c10;
+    --border-hi:  #5c4520;
+    --text:       #d4b97a;
+    --text-dim:   #7a6340;
+    --green:      #4caf6e;
+    --green-dim:  #2a6040;
+    --red:        #c0392b;
+    --red-dim:    #6b1f18;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    font-size: 17px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px 20px 60px;
+    background-image:
+      radial-gradient(ellipse 80% 40% at 50% -10%, rgba(200,168,75,0.07) 0%, transparent 70%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  }
+
+  .container {
+    width: 100%;
+    max-width: 620px;
+  }
+
+  /* ── Header ── */
+  header {
+    text-align: center;
+    margin-bottom: 36px;
+    position: relative;
+  }
+  .header-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .header-line::before,
+  .header-line::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+  }
+  .gem-icon {
+    font-size: 28px;
+    filter: drop-shadow(0 0 8px rgba(200,168,75,0.6));
+    animation: pulse 3s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { filter: drop-shadow(0 0 8px rgba(200,168,75,0.6)); }
+    50%      { filter: drop-shadow(0 0 18px rgba(200,168,75,1)); }
+  }
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 1.55rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--gold-light);
+    text-transform: uppercase;
+  }
+  .subtitle {
+    font-style: italic;
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    letter-spacing: 0.04em;
+  }
+  .deco-line {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-hi), transparent);
+    margin-top: 18px;
+  }
+
+  /* ── Panels ── */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 24px 28px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 2px;
+    background: linear-gradient(135deg, rgba(200,168,75,0.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .panel-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .panel-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Inputs ── */
+  .field {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .field:last-child { margin-bottom: 0; }
+
+  .field-label {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .field-label span {
+    font-size: 1rem;
+    color: var(--text);
+  }
+  .field-label small {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  .input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--border-hi);
+    background: var(--surface);
+    border-radius: 2px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .input-wrap:focus-within {
+    border-color: var(--gold-dim);
+    box-shadow: 0 0 0 2px rgba(200,168,75,0.08);
+  }
+
+  .currency-seg {
+    display: flex;
+    align-items: center;
+  }
+  .currency-seg input {
+    width: 56px;
+    background: transparent;
+    border: none;
+    color: var(--gold-light);
+    font-family: 'Cinzel', serif;
+    font-size: 0.88rem;
+    text-align: right;
+    padding: 8px 4px 8px 8px;
+    outline: none;
+    -moz-appearance: textfield;
+  }
+  .currency-seg input::-webkit-outer-spin-button,
+  .currency-seg input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .currency-seg .coin {
+    font-size: 0.78rem;
+    padding: 0 6px 0 2px;
+    font-weight: 600;
+  }
+  .coin-g { color: #f0c040; }
+  .coin-s { color: #c0c0c0; }
+  .coin-c { color: #cd7f32; }
+
+  .sep {
+    width: 1px;
+    height: 30px;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  /* ── Quantity ── */
+  .qty-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .qty-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+  .qty-controls {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--border-hi);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .qty-btn {
+    width: 32px;
+    height: 32px;
+    background: var(--surface);
+    border: none;
+    color: var(--gold);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    font-family: 'Cinzel', serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .qty-btn:hover { background: var(--border); color: var(--gold-light); }
+  .qty-val {
+    width: 52px;
+    background: var(--surface);
+    border: none;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    color: var(--gold-light);
+    font-family: 'Cinzel', serif;
+    font-size: 0.95rem;
+    text-align: center;
+    padding: 6px 0;
+    outline: none;
+    -moz-appearance: textfield;
+  }
+  .qty-val::-webkit-outer-spin-button,
+  .qty-val::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  /* ── Result ── */
+  .result-panel {
+    background: var(--panel);
+    border: 1px solid var(--border-hi);
+    border-radius: 2px;
+    padding: 28px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .result-panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(200,168,75,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .result-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+    text-align: left;
+  }
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.92rem;
+    color: var(--text-dim);
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .result-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .result-row .val { color: var(--text); font-family: 'Cinzel', serif; font-size: 0.88rem; }
+
+  .profit-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .profit-value {
+    font-family: 'Cinzel', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    transition: color 0.3s;
+  }
+  .profit-value.pos { color: var(--green); text-shadow: 0 0 20px rgba(76,175,110,0.4); }
+  .profit-value.neg { color: var(--red);   text-shadow: 0 0 20px rgba(192,57,43,0.4); }
+  .profit-value.zero { color: var(--text-dim); }
+
+  .per-craft {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    font-style: italic;
+    margin-top: 4px;
+  }
+
+  .breakdown-toggle {
+    margin-top: 18px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    color: var(--gold-dim);
+    font-family: 'Cinzel', serif;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+    transition: color 0.2s;
+  }
+  .breakdown-toggle:hover { color: var(--gold); }
+  .breakdown-toggle .arrow { transition: transform 0.2s; display: inline-block; }
+  .breakdown-toggle.open .arrow { transform: rotate(180deg); }
+
+  .breakdown {
+    display: none;
+    margin-top: 16px;
+    text-align: left;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 14px 18px;
+    line-height: 1.9;
+  }
+  .breakdown.visible { display: block; }
+  .breakdown b { color: var(--text); font-weight: 400; }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    margin-top: 28px;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-style: italic;
+    opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="header-line">
+      <span class="gem-icon">💎</span>
+    </div>
+    <h1>DE Profit Calculator</h1>
+    <div class="subtitle">Large Prismatic Shard · Tailoring · TBC</div>
+    <div class="deco-line"></div>
+  </header>
+
+  <!-- Quantity -->
+  <div class="panel">
+    <div class="qty-row">
+      <span class="qty-label">Crafts to simulate</span>
+      <div class="qty-controls">
+        <button class="qty-btn" id="qtyMinus">−</button>
+        <input class="qty-val" type="number" id="qty" value="1" min="1" max="9999">
+        <button class="qty-btn" id="qtyPlus">+</button>
+      </div>
+    </div>
+
+    <!-- Inputs -->
+    <div class="panel-title">⚒ Materials cost per craft</div>
+
+    <!-- Netherweave Cloth -->
+    <div class="field">
+      <div class="field-label">
+        <span>Netherweave Cloth</span>
+        <small>6 Bolts = 36 cloth ≈ 2 stacks · price per stack (20)</small>
+      </div>
+      <div class="input-wrap" id="wrap-cloth">
+        <div class="currency-seg">
+          <input type="number" id="cloth-g" min="0" max="9999" value="3" placeholder="0">
+          <span class="coin coin-g">g</span>
+        </div>
+        <div class="sep"></div>
+        <div class="currency-seg">
+          <input type="number" id="cloth-s" min="0" max="99" value="0" placeholder="0">
+          <span class="coin coin-s">s</span>
+        </div>
+        <div class="sep"></div>
+        <div class="currency-seg">
+          <input type="number" id="cloth-c" min="0" max="99" value="0" placeholder="0">
+          <span class="coin coin-c">c</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Arcane Dust -->
+    <div class="field">
+      <div class="field-label">
+        <span>Arcane Dust</span>
+        <small>12 units · total price for all 12</small>
+      </div>
+      <div class="input-wrap" id="wrap-dust">
+        <div class="currency-seg">
+          <input type="number" id="dust-g" min="0" max="9999" value="10" placeholder="0">
+          <span class="coin coin-g">g</span>
+        </div>
+        <div class="sep"></div>
+        <div class="currency-seg">
+          <input type="number" id="dust-s" min="0" max="99" value="0" placeholder="0">
+          <span class="coin coin-s">s</span>
+        </div>
+        <div class="sep"></div>
+        <div class="currency-seg">
+          <input type="number" id="dust-c" min="0" max="99" value="0" placeholder="0">
+          <span class="coin coin-c">c</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rune Thread -->
+    <div class="field">
+      <div class="field-label">
+        <span>Rune Thread</span>
+        <small>2 units · total price for both</small>
+      </div>
+      <div class="input-wrap" id="wrap-thread">
+        <div class="currency-seg">
+          <input type="number" id="thread-g" min="0" max="9999" value="1" placeholder="0">
+          <span class="coin coin-g">g</span>
+        </div>
+        <div class="sep"></div>
+        <div class="currency-seg">
+          <input type="number" id="thread-s" min="0" max="99" value="0" placeholder="0">
+          <span class="coin coin-s">s</span>
+        </div>
+        <div class="sep"></div>
+        <div class="currency-seg">
+          <input type="number" id="thread-c" min="0" max="99" value="0" placeholder="0">
+          <span class="coin coin-c">c</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sell price -->
+  <div class="panel">
+    <div class="panel-title">💠 Sell price</div>
+    <div class="field">
+      <div class="field-label">
+        <span>Large Prismatic Shard</span>
+        <small>AH price — per shard (1 per DE)</small>
+      </div>
+      <div class="input-wrap" id="wrap-shard">
+        <div class="currency-seg">
+          <input type="number" id="shard-g" min="0" max="9999" value="0" placeholder="0">
+          <span class="coin coin-g">g</span>
+        </div>
+        <div class="sep"></div>
+        <div class="currency-seg">
+          <input type="number" id="shard-s" min="0" max="99" value="0" placeholder="0">
+          <span class="coin coin-s">s</span>
+        </div>
+        <div class="sep"></div>
+        <div class="currency-seg">
+          <input type="number" id="shard-c" min="0" max="99" value="0" placeholder="0">
+          <span class="coin coin-c">c</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- AH cut toggle -->
+    <div style="display:flex;align-items:center;gap:10px;margin-top:16px;padding-top:16px;border-top:1px dashed var(--border);">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.88rem;color:var(--text-dim);">
+        <input type="checkbox" id="ah-cut" style="accent-color:var(--gold);width:14px;height:14px;" checked>
+        <span>Deduct 5% AH cut from sale price</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="result-panel">
+    <div class="result-rows" id="result-rows"></div>
+
+    <div class="profit-label">Total Profit</div>
+    <div class="profit-value zero" id="profit-display">— g — s — c</div>
+    <div class="per-craft" id="per-craft-display"></div>
+
+    <div class="breakdown-toggle" id="breakdown-toggle">
+      <span>Detailed breakdown</span>
+      <span class="arrow">▾</span>
+    </div>
+    <div class="breakdown" id="breakdown"></div>
+  </div>
+
+  <footer>Prices in gold · silver · copper &nbsp;·&nbsp; 1g = 100s = 10 000c</footer>
+</div>
+
+<script>
+  // ── Helpers ──
+  const $ = id => document.getElementById(id);
+  const gsc = (g, s, c) => (parseFloat(g)||0)*10000 + (parseFloat(s)||0)*100 + (parseFloat(c)||0);
+  const readField = prefix => gsc($(prefix+'-g').value, $(prefix+'-s').value, $(prefix+'-c').value);
+
+  function formatCopper(c, signed = false) {
+    const neg = c < 0;
+    c = Math.round(Math.abs(c));
+    const co = c % 100;
+    const si = Math.floor(c / 100) % 100;
+    const go = Math.floor(c / 10000);
+    const sign = signed ? (neg ? '− ' : '+ ') : (neg ? '− ' : '');
+    return `${sign}${go}g ${si}s ${co}c`;
+  }
+
+  function formatCopperHTML(c, signed = false) {
+    const neg = c < 0;
+    c = Math.round(Math.abs(c));
+    const co = c % 100;
+    const si = Math.floor(c / 100) % 100;
+    const go = Math.floor(c / 10000);
+    const sign = signed ? (neg ? '&minus; ' : '+ ') : (neg ? '&minus; ' : '');
+    return `${sign}<span style="color:var(--coin-g,#f0c040)">${go}g</span> <span style="color:#c0c0c0">${si}s</span> <span style="color:#cd7f32">${co}c</span>`;
+  }
+
+  // ── Core calc ──
+  function recalc() {
+    const qty       = Math.max(1, parseInt($('qty').value)||1);
+    const clothPer  = readField('cloth') * 2;  // 2 stacks per craft
+    const dustPer   = readField('dust');
+    const threadPer = readField('thread');
+
+    const totalCostPer = clothPer + dustPer + threadPer;
+    const totalCost    = totalCostPer * qty;
+
+    const shardRaw     = readField('shard');
+    const ahCut        = $('ah-cut').checked ? 0.05 : 0;
+    const shardNet     = Math.round(shardRaw * (1 - ahCut));
+    const totalRevenue = shardNet * qty;
+
+    const profit       = totalRevenue - totalCost;
+    const profitPer    = totalRevenue / qty - totalCostPer;
+
+    // Result rows
+    const rows = $('result-rows');
+    rows.innerHTML = [
+      ['Total materials cost', -totalCost],
+      ['Total revenue', totalRevenue],
+    ].map(([label, val]) => `
+      <div class="result-row">
+        <span>${label}</span>
+        <span class="val">${formatCopper(val)}</span>
+      </div>`).join('');
+
+    // Profit
+    const pd = $('profit-display');
+    pd.textContent = formatCopper(profit);
+    pd.className = 'profit-value ' + (profit > 0 ? 'pos' : profit < 0 ? 'neg' : 'zero');
+
+    const pc = $('per-craft-display');
+    if (qty > 1) {
+      pc.textContent = `${formatCopper(profitPer)} per craft`;
+    } else {
+      pc.textContent = '';
+    }
+
+    // Breakdown
+    $('breakdown').innerHTML = `
+      <b>Recipe (1 craft):</b><br>
+      · 6 Bolts Netherweave = 2 stacks cloth &nbsp;→ ${formatCopper(clothPer)}<br>
+      · 12 Arcane Dust &nbsp;→ ${formatCopper(dustPer)}<br>
+      · 2 Rune Thread &nbsp;→ ${formatCopper(threadPer)}<br>
+      · <b>Craft cost</b> = ${formatCopper(totalCostPer)}<br>
+      <br>
+      <b>Output (1 craft → 1 Large Prismatic Shard):</b><br>
+      · Shard AH price = ${formatCopper(shardRaw)}<br>
+      ${ahCut ? `· After 5% AH cut = ${formatCopper(shardNet)}<br>` : ''}
+      <br>
+      <b>× ${qty} crafts:</b><br>
+      · Total cost = ${formatCopper(totalCost)}<br>
+      · Total revenue = ${formatCopper(totalRevenue)}<br>
+      · <b>Net profit = ${formatCopper(profit)}</b>
+    `;
+  }
+
+  // ── Quantity buttons ──
+  $('qtyPlus').addEventListener('click', () => {
+    $('qty').value = Math.min(9999, (parseInt($('qty').value)||0) + 1);
+    recalc();
+  });
+  $('qtyMinus').addEventListener('click', () => {
+    $('qty').value = Math.max(1, (parseInt($('qty').value)||0) - 1);
+    recalc();
+  });
+
+  // ── Breakdown toggle ──
+  const toggle = $('breakdown-toggle');
+  toggle.addEventListener('click', () => {
+    $('breakdown').classList.toggle('visible');
+    toggle.classList.toggle('open');
+  });
+
+  // ── Listen to all inputs ──
+  document.querySelectorAll('input').forEach(el => el.addEventListener('input', recalc));
+
+  recalc();
+</script>
+</body>
+</html>
